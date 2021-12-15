@@ -10,7 +10,6 @@ class PcTest extends FreeSpec with ChiselScalatestTester{
         c.io.input.poke(0.U)   
         c.clock.step(100) 
         c.io.pc.expect(0.U)    
-        c.io.pc4.expect(4.U)    
         }
     }
 }
