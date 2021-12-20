@@ -7,10 +7,10 @@ import chiseltest._
 class TopModuleTest extends FreeSpec with ChiselScalatestTester{
     "Top Module Test" in {
         test(new TopModule()){c=>
-        c.io.instruction.poke("h000000".U)
-        c.io.PCin.poke(0.U)
+        c.io.instruction.poke("h100293".U)
+        // c.io.PCin.poke(0.U)
         c.io.aluResult.expect(0.U)
-        c.clock.step(2)
+        c.clock.step(1)
         }
     }
 }

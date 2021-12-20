@@ -8,7 +8,7 @@ class TopModule extends Module {
     val io = IO(new Bundle{
         val instruction = Input(UInt(32.W))
         val aluResult = Output(UInt(32.W))
-        val PCin = Input(UInt(32.W))
+        // val PCin = Input(UInt(32.W))
 
     })
 
@@ -21,20 +21,20 @@ class TopModule extends Module {
     val Immgen = Module(new ImmGen())
     val typdecode = Module(new TypeDecode())
     val CU = Module(new ControlUnit())
-    val jlrtarget = Module(new JalrTarget())
+    // val jlrtarget = Module(new JalrTarget())
 
-
+    typdecode.io.opcode := io.instruction(6,0)
     //jal
     when (Insmem.io.instOut(6,0) === 111.U){
-        PC.io.input := Immgen.io.immediate_Se
+        PC.io.input := (Immgen.io.immediate_Se).asUInt
     }
     //branch
     .elsewhen(Insmem.io.instOut(6,0) === 99.U){
-        PC.io.input := Immgen.io.immediate_Se
+        PC.io.input := (Immgen.io.immediate_Se).asUInt
     }
     //jalr
     .elsewhen(Insmem.io.instOut(6,0) === 103.U){
-        PC.io.input := Immgen.io.immediate_Se
+        PC.io.input := (Immgen.io.immediate_Se).asUInt
     }
     .otherwise{
         PC.io.input := 0.U
@@ -52,18 +52,24 @@ class TopModule extends Module {
     Immgen.io.PC := PC.io.pc
 
     // ALU CONtrol
+    alu.io.selec := aluCntrl.io.aluOpp
     aluCntrl.io.fun3 := Insmem.io.instOut(14,12)
     aluCntrl.io.fun7 := Insmem.io.instOut(30)
     aluCntrl.io.branch :=  CU.io.branch
 
+    //CU
+    CU.io.Instruction := io.instruction
+
     //ALU
-    alu.io.A := Mux((CU.io.auipc),PC.io.pc,RegF.io.Aout)
+    alu.io.ins := io.instruction
+    alu.io.A := Mux(CU.io.auipc,(PC.io.pc),(RegF.io.Aout).asUInt)
 
     val tmp = ((CU.io.Immediate) | (CU.io.Utype) | (CU.io.Store))
-    alu.io.B := Mux(tmp,Immgen.io.immediate_Se,RegF.io.Bout)
+    alu.io.B := Mux(tmp,(Immgen.io.immediate_Se).asUInt,(RegF.io.Bout).asUInt)
 
     alu.io.selec := Mux(((CU.io.Store) |(CU.io.Load)),0.U,aluCntrl.io.aluOpp)
-    RegF.io.writeBack := alu.io.output
+    RegF.io.writeBack := (alu.io.output).asSInt
+    io.aluResult := alu.io.output
 
     //DataMem
     Datameme.io.DataAddr := alu.io.output(7,0)
